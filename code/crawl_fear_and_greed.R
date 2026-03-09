@@ -10,7 +10,7 @@ API_URL <- "https://api.alternative.me/fng/?limit=0"
 
 # CẤU HÌNH ĐƯỜNG DẪN THEO CẤU TRÚC VS CODE
 RAW_DATA_PATH <- "data/raw"
-OUTPUT_PATH   <- "data/output"
+OUTPUT_PATH   <- "data/processed"
 
 OUTPUT_CSV_NAME <- file.path(RAW_DATA_PATH, "crypto_fear_and_greed_index.csv")
 OUTPUT_IMG_NAME <- file.path(OUTPUT_PATH, "fear_and_greed_chart.png")
