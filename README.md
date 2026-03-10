@@ -11,7 +11,7 @@ Mechanism: Có sự khác biệt có ý nghĩa thống kê về rủi ro giữa 
 
 Prediction: Liệu các mô hình Logistic với sai số chuẩn cụm (Cluster SE) có đủ khả năng cảnh báo sớm các biến cố hiếm này?
 
-2. Cấu trúc thư mục (Project Structure)
+1. Cấu trúc thư mục (Project Structure)
 Dự án tách biệt rõ ràng giữa mã nguồn, dữ liệu thô và kết quả đầu ra:
 
 ## 📂 Cấu trúc dự án (Project Structure)
@@ -28,8 +28,6 @@ stablecoin-depeg-analysis/
 
 │   ├── 🤖 simple_model.R      # Chạy mô hình Logit & Xuất kết quả cuối cùng
 
-│   └── 🌐 crawl_scripts/      # Nhóm script thu thập dữ liệu tự động
-
 │       ├── crawl_top5.R       # Lấy dữ liệu BTC/ETH (Yahoo Finance)
 
 │       ├── crawl_market_cap.R # Lấy vốn hóa Stablecoin (DefiLlama)
@@ -44,6 +42,12 @@ stablecoin-depeg-analysis/
 
 │   └── 📊 output/             # Kết quả trực quan hóa (Biểu đồ PNG)
 
+│       ├── 📊 eda_results/        # Các bảng Table 1, 2, 3 và biểu đồ EDA
+
+│       ├── 📈 simple_logit_results.xlsx # Kết quả chạy mô hình
+
+│       └── 🖼️ figures            # Các biểu đồ Figure
+
 ├── 📁 model/                  # Lưu trữ kết quả định lượng (Excel)
 
 ├── 📁 renv/                   # Cấu hình môi trường ảo (R Environment)
@@ -52,8 +56,7 @@ stablecoin-depeg-analysis/
 
 └── 📄 README.md               # Tài liệu hướng dẫn dự án
 
-
-3. Quy trình vận hành (Data Pipeline)
+1. Quy trình vận hành (Data Pipeline)
 
 Thu thập (Crawl): Tự động hóa lấy dữ liệu từ DefiLlama, Alternative.me và Yahoo Finance.
 
@@ -61,9 +64,9 @@ Hợp nhất (Merge): collect_data.R gộp dữ liệu 8 đồng coin, xử lý 
 
 Biến đổi (Feature Engineering): panel_2.R tính toán Volatility 30d, Illiquidity và tạo Biến trễ (Lag 1) để khử hiện tượng nội sinh.
 
-Phân tích (Modeling): simple_model.R thực thi hồi quy Logistic với Cluster Standard Errors theo từng đồng coin.
+Phân tích (Modeling): simple_model.R thực thi thực thi hồi quy Logistic với Cluster Standard Errors theo từng nhóm đồng coin.
 
-4. Danh mục biến số (Feature Set)
+1. Danh mục biến số (Feature Set)
 
 Stablecoin-level: dev_abs (độ lệch giá), sigma_dev_30d (biến động), illiq (thanh khoản kém).
 
@@ -73,7 +76,7 @@ Macro & Sentiment: Vốn hóa thị trường Stablecoin tổng thể và Chỉ 
 
 Interaction terms: Hiệu ứng tương tác giữa loại tài sản bảo đảm (Dummy) và các biến đặc thù của coin.
 
-5. Hướng dẫn sử dụng & Cài đặt
+1. Hướng dẫn sử dụng & Cài đặt
 
 Dự án sử dụng renv để đảm bảo tái lập môi trường chính xác.
 
@@ -87,11 +90,11 @@ Chạy mô hình:
 
 Thực thi toàn bộ quy trình bằng lệnh:
 
-source("code/simple_model.R")
+source("run_all.R")
 
-Kết quả (Excel) sẽ xuất hiện tại thư mục model/ gồm 3 trang: Coefficients, Summary và VIF.
+Kết quả (Excel) sẽ xuất hiện tại thư mục data/outputs/
 
-6. Kỹ thuật thống kê (Key Technical Notes)
+1. Kỹ thuật thống kê (Key Technical Notes)
 
 Ngưỡng De-peg: Sử dụng ngưỡng tĩnh ±1%.
 
