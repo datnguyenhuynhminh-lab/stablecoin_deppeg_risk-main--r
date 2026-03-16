@@ -5,7 +5,7 @@ library(tidyquant) # Thay cho yfinance
 library(tidyverse) # Thay cho pandas
 
 # Cấu hình mốc thời gian
-START_DATE <- "2024-01-01"
+START_DATE <- "2019-01-01"
 END_DATE   <- "2026-02-01"
 
 # Danh sách Tickers (Yahoo Finance format)

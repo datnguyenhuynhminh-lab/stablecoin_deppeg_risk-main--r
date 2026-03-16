@@ -1,8 +1,26 @@
-.Rproj.user
+.Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
 
-data/processed/
+# Keep code + data + CSV results; ignore other generated files
+
+# R environment caches
 renv/library/
 renv/staging/
+
+# Output artifacts (only keep CSV results)
+outputs/*
+!outputs/*.csv
+!outputs/eda_results/
+!outputs/eda_results/*.csv
+
+# Common temp/log files
+*.log
+*.tmp
+*.cache
+
+# OS / editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/

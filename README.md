@@ -1,100 +1,132 @@
-🪙 Stablecoin Depeg Risk Analysis (R-based Pipeline)
+# Stablecoin De-Peg Risk Analysis (2019–2025)
 
-1. Tổng quan dự án (Project Overview)
+## 1. Project Title & Overview
 
-Dự án này được thiết kế như một pipeline tự động hóa hoàn toàn, từ khâu thu thập dữ liệu (Crawl) đến thực thi các mô hình kinh tế lượng để phân tích và dự báo rủi ro de-peg (mất neo giá trị 1 USD) của các Stablecoin phổ biến trong giai đoạn 2024–2026.
+**Stablecoin De-Peg Risk Analysis** is an empirical econometric study of **rare de-peg events** across 12 major stablecoins using **daily panel data (2019–2025)**. The primary objective is to **model and forecast de-peg risk**—defined as a deviation from the USD peg—while rigorously testing whether **Fiat-backed stablecoins are structurally safer than crypto/algorithmic counterparts under market stress**.
 
-Câu hỏi nghiên cứu trọng tâm:
-Inference: Yếu tố nào (thanh khoản, biến động thị trường, tâm lý) thực sự thúc đẩy rủi ro mất neo?
+This repository implements a reproducible pipeline from data collection to econometric estimation, emphasizing robust inference in the presence of **rare events, separation, and within-entity serial dependence**.
 
-Mechanism: Có sự khác biệt có ý nghĩa thống kê về rủi ro giữa nhóm Fiat-backed và Crypto-backed không?
+---
 
-Prediction: Liệu các mô hình Logistic với sai số chuẩn cụm (Cluster SE) có đủ khả năng cảnh báo sớm các biến cố hiếm này?
+## 2. Key Findings
 
-2. Cấu trúc thư mục (Project Structure)
-Dự án tách biệt rõ ràng giữa mã nguồn, dữ liệu thô và kết quả đầu ra:
+- **Bank-run mechanism dominates.** De-peg persistence (`lag(depeg_01)`) and liquidity proxies (`volume`) are the strongest predictors of future de-pegs. Macro shocks (e.g., BTC volatility) are secondary and largely absorbed by micro-level structural weaknesses.
 
-## 📂 Cấu trúc dự án (Project Structure)
+- **Fiat-backed myth debunked.** During severe crises (defined as de-peg > 1%), **Fiat-backed stablecoins do not exhibit a statistically significant safety advantage** over crypto/algorithmic-backed ones. The market prices **liquidity depth**, not the collateral label.
 
-Dự án được tổ chức theo mô chuẩn khoa học dữ liệu, tách biệt rõ ràng các giai đoạn từ thu thập đến phân tích:
+---
 
-stablecoin-depeg-analysis/
+## 3. Methodology
 
-├── 📁 code/                   # Script xử lý chính (R Language)
+### 3.1 Outcome Definition
+- **De-peg indicator (binary):** `depeg_01` = 1 if |price − 1| ≥ 0.01 (i.e., ≥1% deviation), else 0.
+- Event rate ≈ **12.5%** (rare-event regime).
 
-│   ├── 🛠️ collect_data.R      # Gộp dữ liệu & Xử lý Missing Value (Forward Fill)
+### 3.2 Econometric Model
+- **Panel Logistic Regression** with fixed effects / entity clustering.
+- Estimation uses **Firth’s penalized likelihood** via `brglm2` to address **quasi-separation and coefficient explosion** typical of rare events.
 
-│   ├── 📈 panel_2.R           # Biến đổi dữ liệu (Feature Engineering & Lags)
+\[ \Pr(y_{it}=1 \,|\, X_{it}) = \frac{1}{1 + \exp(-X_{it}\beta)} \]
 
-│   ├── 🤖 simple_model.R      # Chạy mô hình Logit & Xuất kết quả cuối cùng
+- **Clustered standard errors** (entity-level) are computed using the `sandwich` package to correct for **serial correlation within coins**.
 
-│   └── 🌐 crawl_scripts/      # Nhóm script thu thập dữ liệu tự động
+### 3.3 Interpretation
+- Report **Average Marginal Effects (AMEs)** instead of raw log-odds coefficients for **actionable economic interpretation**.
+- AMEs are computed to quantify the change in de-peg probability for a unit change in predictors, averaged over the sample.
 
-│       ├── crawl_top5.R       # Lấy dữ liệu BTC/ETH (Yahoo Finance)
+---
 
-│       ├── crawl_market_cap.R # Lấy vốn hóa Stablecoin (DefiLlama)
+## 4. Data Pipeline & Preprocessing
 
-│       └── crawl_f&g.R        # Lấy chỉ số Fear & Greed (Alternative.me)
+### 4.1 Data Sources
+- Stablecoin prices and on-chain metrics (multiple APIs / crawl scripts).
 
-├── 📁 data/                   # Quản lý kho lưu trữ dữ liệu
+### 4.2 Preprocessing Notes (Key Technical Details)
+- **Lagging:** All independent variables are lagged by 1 day (`t-1`) to prevent forward-looking leakage.
+- **De-peg threshold:** Binary event defined at ±1% deviation from USD peg (`depeg_01`).
+- **Winsorization:** Outliers in **volume** and **volatility** are winsorized at the 1st and 99th percentiles. Winsorization is fitted on the training set to avoid look-ahead bias.
+- **Collinearity:** Interaction terms introduce structural collinearity (VIF ≈ 19). This is **expected and retained** because it arises from theoretically motivated interaction constructs.
 
-│   ├── 📥 raw/                # Dữ liệu gốc chưa qua chỉnh sửa (CSV)
+---
 
-│   ├── 🔄 processed/          # Dữ liệu đã làm sạch (Master & Panel Data)
+## 5. Repository Structure
 
-│   └── 📊 output/             # Kết quả trực quan hóa (Biểu đồ PNG)
+```
+stablecoin_deppeg_risk-main--r/
+├── code/                     # R scripts (data wrangling + modeling)
+│   ├── collect_data.R        # Data ingestion + merge + initial cleaning
+│   ├── panel_2.R             # Feature engineering (lags, volatility, interactions)
+│   ├── simple_model.R        # Model estimation + clustered SE + marginal effects
+│   └── crawl_*               # Data collection scripts (APIs / web sources)
+├── data/
+│   ├── raw/                  # Raw input CSVs
+│   ├── processed/            # Cleaned master panel datasets
+│   └── output/               # Derived CSV outputs (model tables, predictions)
+├── outputs/                  # Figures, charts, and stats tables (CSV/PNG)
+├── model/                    # Exported model results (Excel, tables)
+├── renv/                     # R environment cache
+├── renv.lock                 # Locked package versions
+└── README.md                 # This documentation
+```
 
-├── 📁 model/                  # Lưu trữ kết quả định lượng (Excel)
+---
 
-├── 📁 renv/                   # Cấu hình môi trường ảo (R Environment)
+## 6. Reproducibility Guide (How to Run)
 
-├── 📄 renv.lock               # Tệp khóa phiên bản thư viện (Packages)
+1. **Clone repository**
+   ```sh
+   git clone <repo-url>
+   cd stablecoin_deppeg_risk-main--r
+   ```
 
-└── 📄 README.md               # Tài liệu hướng dẫn dự án
+2. **Restore R environment**
+   In R (RStudio or terminal):
+   ```r
+   renv::restore()
+   ```
+
+3. **Prepare the data**
+   ```r
+   source("code/collect_data.R")
+   source("code/panel_2.R")
+   ```
+
+4. **Estimate the model & produce outputs**
+   ```r
+   source("code/simple_model.R")
+   ```
+
+5. **Inspect results**
+   - **CSV outputs:** `data/processed/` and `outputs/` (marginal effects, coefficient tables)
+   - **Figures:** `outputs/` (plots showing risk dynamics)
+
+> ⚠️ Ensure the data pipeline produces the same panel alignment and lag structure before interpreting marginal effects. This pipeline is designed for **reproducible inference** in a rare-event panel setting.
+
+---
+
+## 7. Dependencies
+
+Core R packages used in this project:
+
+- `dplyr`
+- `brglm2` (Firth penalized logit)
+- `sandwich` (clustered SE)
+- `lmtest` (coefficient inference via `coeftest`)
+- `marginaleffects` (AME computations)
+- `ggplot2` (plots)
+- `lubridate` (date handling)
+
+> ✅ Use `renv::snapshot()` after installing additional packages to lock dependencies.
+
+---
+
+## 8. Authors / Citation
+
+**Author:** Quyền P.M., Đạt N.H.M. (2026)
 
 
-3. Quy trình vận hành (Data Pipeline)
+> “Stablecoin De-Peg Risk Analysis: A Panel Logit Study with Firth Penalization and Clustered Standard Errors.”
 
-Thu thập (Crawl): Tự động hóa lấy dữ liệu từ DefiLlama, Alternative.me và Yahoo Finance.
+---
 
-Hợp nhất (Merge): collect_data.R gộp dữ liệu 8 đồng coin, xử lý dữ liệu thiếu bằng phương pháp Forward Fill.
-
-Biến đổi (Feature Engineering): panel_2.R tính toán Volatility 30d, Illiquidity và tạo Biến trễ (Lag 1) để khử hiện tượng nội sinh.
-
-Phân tích (Modeling): simple_model.R thực thi hồi quy Logistic với Cluster Standard Errors theo từng đồng coin.
-
-4. Danh mục biến số (Feature Set)
-
-Stablecoin-level: dev_abs (độ lệch giá), sigma_dev_30d (biến động), illiq (thanh khoản kém).
-
-Market Spillover: Biến động giá và lợi suất của BTC và ETH.
-
-Macro & Sentiment: Vốn hóa thị trường Stablecoin tổng thể và Chỉ số Fear & Greed.
-
-Interaction terms: Hiệu ứng tương tác giữa loại tài sản bảo đảm (Dummy) và các biến đặc thù của coin.
-
-5. Hướng dẫn sử dụng & Cài đặt
-
-Dự án sử dụng renv để đảm bảo tái lập môi trường chính xác.
-
-Thiết lập môi trường:
-
-Mở dự án bằng RStudio hoặc VS Code.
-
-Nhập lệnh sau vào Console để khôi phục thư viện: renv::restore().
-
-Chạy mô hình:
-
-Thực thi toàn bộ quy trình bằng lệnh:
-
-source("code/simple_model.R")
-
-Kết quả (Excel) sẽ xuất hiện tại thư mục model/ gồm 3 trang: Coefficients, Summary và VIF.
-
-6. Kỹ thuật thống kê (Key Technical Notes)
-
-Ngưỡng De-peg: Sử dụng ngưỡng tĩnh ±1%.
-
-Optimal Cutoff: Tự động tìm ngưỡng tối ưu trên tập Train để đạt F1-score cao nhất.
-
-Centering: Chuẩn hóa biến liên tục quanh giá trị trung bình để giảm đa cộng tuyến khi dùng biến tương tác.
+*Note:* This document is intended to support **reproducibility** and **academic transparency** for researchers studying stablecoin de-peg risk in a panel framework.

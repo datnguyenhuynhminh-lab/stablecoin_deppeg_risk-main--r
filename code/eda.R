@@ -33,10 +33,10 @@ df <- df %>%
   mutate(
     date = as.Date(date),
     coin = as.factor(coin),
-    # dummy = 1 (Crypto-backed), 0 (Fiat-backed)
-    dummy = factor(dummy, levels = c(0, 1), labels = c("Fiat-backed", "Crypto-backed")),
+    # dummy_crypto = 1 (Crypto-backed), 0 (Fiat-backed)
+    dummy = factor(dummy_crypto, levels = c(0, 1), labels = c("Fiat-backed", "Crypto-backed")),
     # depeg_static là label chính (1 = depeg, 0 = normal)
-    depeg_static = as.factor(depeg_static)
+    depeg_static = as.factor(depeg_01)
   )
 
 message("[INFO] Kích thước dữ liệu: ", nrow(df), " dòng, ", ncol(df), " cột.")
@@ -61,8 +61,8 @@ write_csv(depeg_summary, file.path(output_dir, "table1_depeg_rates.csv"))
 # Chỉ chọn các biến numeric quan trọng và các biến lag dùng cho mô hình
 numeric_vars <- df %>%
   select(
-    dev_abs, sigma_dev_30d, log_volume, illiq, circulating_supply_percent_change_7d,
-    BTC_Realized_Daily_Volatility, ETH_percent_change_24h, global_mcap_logret, fear_greed_index,
+    dev_abs, sigma_dev_30d, log_volume, illiq, # circulating_supply_percent_change_7d,
+    BTC_Realized_Daily_Volatility, ETH_percent_change_24h, stable_mcap_logret, fear_greed_index,
     dev_abs_lag1, sigma_dev_30d_lag1, log_volume_lag1, illiq_lag1
   )
 
@@ -99,6 +99,7 @@ p1 <- ggplot(depeg_summary, aes(x = reorder(coin, depeg_events), y = depeg_event
   )
 ggsave(file.path(output_dir, "plot1_depeg_frequency.png"), plot = p1, width = 8, height = 5, bg = "white")
 
+
 # Figure 2 — Distribution của dev_abs và ngưỡng depeg (Bản cập nhật) ----
 # Tinh chỉnh: Thu hẹp xlim xuống 0.02 và dùng scales = "free_y" để ôm sát phân phối
 p2 <- ggplot(df, aes(x = dev_abs, fill = dummy)) +
@@ -112,7 +113,7 @@ p2 <- ggplot(df, aes(x = dev_abs, fill = dummy)) +
   coord_cartesian(xlim = c(0, 0.02)) + 
   scale_fill_manual(values = c("Fiat-backed" = "#3498db", "Crypto-backed" = "#e67e22")) +
   labs(
-    title = "Figure 2: Phân phối Độ lệch tuyệt đối (dev_abs)",
+    title = "Phân phối Độ lệch tuyệt đối (dev_abs)",
     subtitle = "So sánh giữa Fiat-backed và Crypto-backed. Trục X được thu hẹp (0-2%).",
     x = "Độ lệch tuyệt đối khỏi mốc 1 USD (|Price - 1|)",
     y = "Mật độ (Density)",
@@ -152,7 +153,7 @@ cor_vars <- df %>%
   select(
     dev_abs_lag1, sigma_dev_30d_lag1, log_volume_lag1, illiq_lag1, 
     BTC_Realized_Daily_Volatility_lag1, ETH_percent_change_24h_lag1, 
-    global_mcap_logret_lag1, fear_greed_index_lag1
+    stable_mcap_logret_lag1, fear_greed_index_lag1
   ) %>%
   drop_na() # Bỏ NA để tính correlation
 
@@ -172,37 +173,51 @@ invisible(dev.off())
 
 # Figure 4 — Chuỗi giá (Price Series) và Ngưỡng Depeg của 8 Stablecoin ----
 message("[INFO] Đang vẽ Figure 4 (Price Series Grid)...")
+# Biểu đồ Chuỗi giá (Price Series) và Ngưỡng Depeg ----
+message("[INFO] Đang vẽ Biểu đồ Price Series Grid...")
+# Biểu đồ Chuỗi giá (Price Series) và Ngưỡng Depeg ----
+message("[INFO] Đang vẽ Biểu đồ Price Series Grid...")
+
+# 1. Khai báo danh sách thứ tự xếp chéo để tạo bố cục 2 cột trái (Crypto), 2 cột phải (Fiat)
+target_order_grid <- c(
+  # Hàng 1: 2 Crypto đầu, 2 Fiat đầu
+  "GHO", "Legacy Frax Dollar", "BUSD", "First Digital USD",
+  # Hàng 2: 2 Crypto tiếp theo, 2 Fiat tiếp theo
+  "Liquity USD", "TerraClassicUSD", "PayPal USD", "Tether USDt",
+  # Hàng 3: 2 Crypto cuối, 2 Fiat cuối
+  "crvUSD", "sUSD", "TrueUSD", "USDC"
+)
+
+# 2. Xử lý dữ liệu ép thứ tự cho biểu đồ giá
+df_fig4 <- df %>%
+  filter(coin %in% target_order_grid) %>%
+  mutate(coin = factor(coin, levels = target_order_grid))
 
 # Lọc ra các điểm depeg để chấm đỏ
-depeg_points <- df %>% filter(depeg_static == 1)
+depeg_points <- df_fig4 %>% filter(depeg_static == 1)
 
-p4 <- ggplot(df, aes(x = date, y = close)) +
-  # Vẽ đường chuỗi giá
+# 3. Vẽ biểu đồ lưới 3x4
+p4 <- ggplot(df_fig4, aes(x = date, y = close)) +
   geom_line(color = "#2c3e50", size = 0.5, alpha = 0.8) +
-  # Vẽ mốc neo 1 USD (đường liền)
   geom_hline(yintercept = 1.00, color = "black", linetype = "solid", size = 0.4) +
-  # Vẽ ngưỡng Depeg trên 1.01 (+1%) (đường đứt nét đỏ)
   geom_hline(yintercept = 1.01, color = "#c0392b", linetype = "dashed", size = 0.6) +
-  # Vẽ ngưỡng Depeg dưới 0.99 (-1%) (đường đứt nét đỏ)
   geom_hline(yintercept = 0.99, color = "#c0392b", linetype = "dashed", size = 0.6) +
-  # Chấm đỏ tại các điểm cắt ngưỡng (Depeg events)
   geom_point(data = depeg_points, aes(x = date, y = close), color = "red", size = 1.5) +
-  # Chia lưới facet 2x4 cho 8 đồng coin
+  # Chia lưới 4 cột, do đã ép levels ở trên nên nó sẽ tự động đổ đúng vị trí 2 trái - 2 phải
   facet_wrap(~ coin, ncol = 4, scales = "free_y") +
   labs(
-    title = "Figure 4: Biến động giá Stablecoin và Các ngưỡng Depeg (\u00B11%)",
-    subtitle = "Đường đứt nét đỏ: Ngưỡng 0.99 và 1.01 USD. Chấm đỏ: Các sự kiện mất chốt (Depeg).",
+    title = "Biến động giá Stablecoin và Các ngưỡng Depeg (\u00B11%)",
+    subtitle = "2 cột trái: Crypto/Algo-backed. 2 cột phải: Fiat-backed. Chấm đỏ: Sự kiện mất chốt.",
     x = "Thời gian",
     y = "Giá đóng cửa (USD)"
   ) +
   theme(
-    strip.text = element_text(face = "bold", size = 12, color = "white"),
+    strip.text = element_text(face = "bold", size = 10, color = "white"),
     strip.background = element_rect(fill = "#34495e"),
     panel.grid.minor = element_blank()
   )
 
-# Lưu ảnh kích thước lớn ngang để bao quát lưới 2x4
-ggsave(file.path(output_dir, "Figure_4_Price_Series_Grid.png"), plot = p4, width = 16, height = 8, dpi = 300)
+ggsave(file.path(output_dir, "Figure_4_Price_Series_Grid.png"), plot = p4, width = 16, height = 10, dpi = 300)
 # Biểu đồ 5: Dấu vết (Trailing) độ lệch chuẩn 30 ngày (sigma_dev_30d)
 p5 <- df %>%
   filter(!is.na(sigma_dev_30d)) %>%
@@ -217,29 +232,51 @@ p5 <- df %>%
   theme(legend.position = "bottom")
 ggsave(file.path(output_dir, "plot5_rolling_volatility.png"), plot = p5, width = 10, height = 5, bg = "white")
 
+# Biểu đồ Vốn hóa thị trường (Market Capitalization) ----
+message("[INFO] Đang vẽ Biểu đồ Market Cap...")
 
-# Figure 5 — Market Capitalization theo thời gian ----
-message("[INFO] Đang vẽ Figure 5 (Market Cap)...")
+# 1. Khai báo danh sách thứ tự để phần Legend (chú thích) hiện chuẩn
+target_order <- c(
+  "GHO", "Legacy Frax Dollar", "BUSD", "First Digital USD",
+  "Liquity USD", "TerraClassicUSD", "PayPal USD", "Tether USDt",
+  "crvUSD", "sUSD", "TrueUSD", "USDC"
+)
 
-p6 <- ggplot(df, aes(x = date, y = market_cap / 1e9, color = coin)) +
-  geom_line(size = 0.8, alpha = 0.8) +
-  scale_x_date(date_breaks = "3 months", date_labels = "%b %Y") +
-  # Sử dụng bảng màu đa dạng để dễ phân biệt 8 đồng coin
-  scale_color_brewer(palette = "Paired") +
+# 2. Xử lý dữ liệu
+df_fig5 <- df %>%
+  filter(coin %in% target_order) %>%
+  mutate(coin = factor(coin, levels = target_order))
+
+# Tạo dải 12 màu có độ tương phản cao, rực rỡ và dễ phân biệt nhất
+high_contrast_colors <- c(
+  "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", 
+  "#46f0f0", "#f032e6", "#bcf60c", "#fabebe", "#008080", "#e6beff"
+)
+
+# 3. Vẽ biểu đồ
+p5 <- ggplot(df_fig5, aes(x = date, y = market_cap / 1e9, color = coin)) +
+  geom_line(size = 1, alpha = 0.9) +
+  # Format lại trục năm: Khoảng cách 1 năm, chỉ hiện số năm (ví dụ: 2021, 2022)
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  # Sử dụng dải màu mới
+  scale_color_manual(values = high_contrast_colors) +
   labs(
-    title = "Figure 6: Biến động Vốn hóa thị trường (Market Capitalization)",
-    subtitle = "Giai đoạn 2024 - 2025",
-    x = "Thời gian",
+    title = "Biến động Vốn hóa thị trường (Market Capitalization)",
+    subtitle = "Giai đoạn 2020 - 2025",
+    x = "Năm",
     y = "Vốn hóa thị trường (Tỷ USD)",
     color = "Stablecoin"
   ) +
   theme(
     panel.grid.minor = element_blank(),
     legend.position = "right",
-    legend.title = element_text(face = "bold")
+    legend.title = element_text(face = "bold"),
+    # In đậm và tô màu Title giống tông màu xanh đen (#34495e) của Figure 4
+    plot.title = element_text(face = "bold", size = 14, color = "#34495e"),
+    # Để chữ ở trục X nằm ngang bình thường cho dễ đọc
+    axis.text.x = element_text(angle = 0, hjust = 0.5)
   )
 
-ggsave(file.path(output_dir, "Figure_6_Market_Cap.png"), plot = p6, width = 10, height = 6, dpi = 300)
-
+ggsave(file.path(output_dir, "Figure_5_Market_Cap.png"), plot = p5, width = 10, height = 6, dpi = 300)
 message("[INFO] Hoàn tất! Tất cả bảng biểu và hình ảnh đã được lưu vào: ", output_dir)
 # ==============================================================================

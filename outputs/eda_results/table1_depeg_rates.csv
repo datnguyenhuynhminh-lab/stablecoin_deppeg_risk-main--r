@@ -1,9 +1,13 @@
 coin,dummy,total_obs,depeg_events,depeg_rate_pct
-Liquity USD,Crypto-backed,731,44,6.02
-GHO,Crypto-backed,731,26,3.56
-crvUSD,Crypto-backed,731,7,0.96
-First Digital USD,Fiat-backed,731,1,0.14
-Dai,Crypto-backed,731,0,0
-PayPal USD,Fiat-backed,731,0,0
-Tether USDt,Fiat-backed,731,0,0
-USDC,Fiat-backed,731,0,0
+TerraClassicUSD,Crypto-backed,1864,1350,72.42
+sUSD,Crypto-backed,2192,642,29.29
+Liquity USD,Crypto-backed,1704,424,24.88
+GHO,Crypto-backed,902,193,21.4
+TrueUSD,Fiat-backed,2192,65,2.97
+Legacy Frax Dollar,Crypto-backed,1832,45,2.46
+BUSD,Fiat-backed,2192,38,1.73
+USDC,Fiat-backed,2192,31,1.41
+PayPal USD,Fiat-backed,865,8,0.92
+crvUSD,Crypto-backed,926,7,0.76
+Tether USDt,Fiat-backed,2192,9,0.41
+First Digital USD,Fiat-backed,891,1,0.11

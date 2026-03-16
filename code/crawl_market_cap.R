@@ -7,7 +7,7 @@ library(jsonlite)  # Để xử lý dữ liệu JSON
 library(lubridate) # Xử lý thời gian
 
 # Cấu hình mốc thời gian
-START_DATE <- as.Date("2024-01-01")
+START_DATE <- as.Date("2019-01-01")
 END_DATE   <- as.Date("2026-01-01")
 
 # ĐƯỜNG DẪN ĐẦU RA (THEO CẤU TRÚC VS CODE)
