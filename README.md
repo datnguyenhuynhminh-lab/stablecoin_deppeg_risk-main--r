@@ -61,9 +61,8 @@ stablecoin_deppeg_risk-main--r/
 ├── data/
 │   ├── raw/                  # Raw input CSVs
 │   ├── processed/            # Cleaned master panel datasets
-│   └── output/               # Derived CSV outputs (model tables, predictions)
-├── outputs/                  # Figures, charts, and stats tables (CSV/PNG)
-├── model/                    # Exported model results (Excel, tables)
+├── outputs/
+│   ├── eda_results/          # Result from EDA process
 ├── renv/                     # R environment cache
 ├── renv.lock                 # Locked package versions
 └── README.md                 # This documentation
