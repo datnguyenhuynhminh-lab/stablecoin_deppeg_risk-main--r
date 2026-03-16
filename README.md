@@ -48,8 +48,6 @@ stablecoin-depeg-analysis/
 
 │       └── 🖼️ figures            # Các biểu đồ Figure
 
-├── 📁 model/                  # Lưu trữ kết quả định lượng (Excel)
-
 ├── 📁 renv/                   # Cấu hình môi trường ảo (R Environment)
 
 ├── 📄 renv.lock               # Tệp khóa phiên bản thư viện (Packages)
